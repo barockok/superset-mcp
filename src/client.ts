@@ -1,3 +1,5 @@
+import { CallToolResult } from "@modelcontextprotocol/sdk/types.js";
+
 export class SupersetClient {
   constructor(
     private baseUrl: string,
@@ -12,6 +14,7 @@ export class SupersetClient {
     headers.set("Cookie", this.cookie);
     headers.set("Content-Type", "application/json");
     headers.set("Accept", "application/json");
+    headers.set("Referer", this.baseUrl);
 
     const response = await fetch(url, { ...init, headers });
 
@@ -27,12 +30,11 @@ export class SupersetClient {
     const response = await this.fetch(path);
     return response.json();
   }
+}
 
-  async post(path: string, body?: unknown): Promise<any> {
-    const response = await this.fetch(path, {
-      method: "POST",
-      body: body ? JSON.stringify(body) : undefined,
-    });
-    return response.json();
-  }
+export function toolHandler(fn: () => Promise<CallToolResult>): Promise<CallToolResult> {
+  return fn().catch((error) => ({
+    content: [{ type: "text" as const, text: `Error: ${error instanceof Error ? error.message : String(error)}` }],
+    isError: true,
+  }));
 }
