@@ -1,0 +1,38 @@
+export class SupersetClient {
+  constructor(
+    private baseUrl: string,
+    private cookie: string,
+  ) {
+    this.baseUrl = baseUrl.replace(/\/+$/, "");
+  }
+
+  async fetch(path: string, init?: RequestInit): Promise<Response> {
+    const url = `${this.baseUrl}${path}`;
+    const headers = new Headers(init?.headers);
+    headers.set("Cookie", this.cookie);
+    headers.set("Content-Type", "application/json");
+    headers.set("Accept", "application/json");
+
+    const response = await fetch(url, { ...init, headers });
+
+    if (!response.ok) {
+      const body = await response.text();
+      throw new Error(`Superset API error ${response.status}: ${body}`);
+    }
+
+    return response;
+  }
+
+  async get(path: string): Promise<any> {
+    const response = await this.fetch(path);
+    return response.json();
+  }
+
+  async post(path: string, body?: unknown): Promise<any> {
+    const response = await this.fetch(path, {
+      method: "POST",
+      body: body ? JSON.stringify(body) : undefined,
+    });
+    return response.json();
+  }
+}
